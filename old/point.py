@@ -5,19 +5,21 @@ from matrix import *
 class Point:
     def __init__(self, app, pos):
         self.app = app
-        self.point = np.array([*pos, 1])
+        self.point = np.array([[*pos, 1], [1, 0, 1, 1], [1, 0, 0, 1], [1, 1, 1, 1]])
 
     def draw(self):
         self.screen_projection()
 
     def screen_projection(self):
-        point = self.point @ self.app.camera.camera_matrix()
-        point = point @ self.app.projection.projection_matrix
-        point = point @ self.app.projection.to_screen_matrix
-        point = point[:2]
-
-        print(point)
-        pg.draw.circle(self.app.screen, pg.Color('white'), point, 6)
+        vertices = self.point @ self.app.camera.camera_matrix()
+        vertices = vertices @ self.app.projection.projection_matrix
+        vertices /= vertices[:, -1].reshape(-1, 1)
+        vertices[(vertices > 2) | (vertices < -2)] = 0
+        vertices = vertices @ self.app.projection.to_screen_matrix
+        vertices = vertices[:, :2]
+        print("ASDASDASD")
+        for point in vertices:
+            pg.draw.circle(self.app.screen, pg.Color('#ffffff'), point, 6)
 
     def translate(self, pos):
         self.point = self.point @ translate(pos)

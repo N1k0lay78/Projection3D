@@ -10,7 +10,7 @@ from point import Point
 class app:
     def __init__(self):
         pg.init()
-        self.size = self.w, self.h = 1920, 1080
+        self.size = self.w, self.h = 900, 900
         self.hw, self.hh = self.w / 2, self.h / 2
         self.fps = 60
         self.screen = pg.display.set_mode(self.size, pg.RESIZABLE)
