@@ -2,9 +2,11 @@ from math import ceil
 import pygame as pg
 import pygame.font
 from loguru import logger
+
+from Modeling.editor_objects.Point import Point
 from Modeling.load_image import load_image
 
-
+# TODO:0) создать режим привязки
 # TODO:1) сделать класс прямой, линии, создание линий
 # TODO:2) сохранение в файл и загрузка из файла .obj и мб других
 # TODO:3) отправка через сокеты
@@ -15,6 +17,7 @@ class AppModeling:
         self.textures = []
         self.load_textures()
         self.font_h = pygame.font.Font("Source/Fonts/roboto.ttf", 24)
+        self.font_m = pygame.font.Font("Source/Fonts/roboto.ttf", 16)
         self.font_l = pygame.font.Font("Source/Fonts/roboto.ttf", 12)
         # window
         self.size = self.w, self.h = 0, 0
@@ -22,22 +25,19 @@ class AppModeling:
         self.background = None
         self.zero_point = (0, 0)
         self.full_update_ui(64*10, 64*10)
+        pg.display.set_caption('Я чертила, есть вопросы?')
         # app params
         self.running = True
-        self.points = [[3, 3, 3], [10, 20, 15]]
+        self.points = [Point(self, "A", (-1, -1, -1))]
+        self.active = self.points[-1]
         self.point_names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         self.lines = []
         self.line_names = self.point_names.lower()
         # settings
-        # points
-        self.print_points = True
-        self.print_point_names = True
-        self.print_plane_index = True
-        # line
-        # WIP
-        self.print_lines = False
-        self.print_line_name = False
-        self.print_line_points = False
+        self.draw_types = ["point", "line"]
+        self.draw_names = ["point", "line"]
+        self.draw_coordinate = ['point', 'line']
+        self.draw_plane_indexes = True
 
     def load_textures(self):
         logger.info(f'Load textures')
@@ -80,6 +80,12 @@ class AppModeling:
                     elif event.key == pg.K_r:
                         self.load_textures()
                         self.full_update_ui(*self.size)
+                else:
+                    if self.active:
+                        if self.active.drafting_update(event):
+                            logger.info("End of drafting")
+                            self.points.append(Point(self, self.point_names[len(self.points)]))
+                            self.active = self.points[-1]
 
             # self.screen.fill(pg.Color("#20394f"))
             self.screen.blit(self.background, (0, 0))
@@ -87,24 +93,8 @@ class AppModeling:
             for line in self.lines:
                 pg.draw.aaline(self.screen, (255, 255, 255), self.points[line[0]][:2], self.points[line[1]][:2])
                 pg.draw.aaline(self.screen, (255, 255, 255), self.points[line[0]][::2], self.points[line[1]][::2])
-            if self.print_points:
-                for i, point in enumerate(self.points):
-                    self.screen.blit(self.textures[1],
-                                     (self.zero_point[0] - 9 - point[0] * 16, self.zero_point[1] - 9 + point[1] * 16))
-                    if self.print_point_names:
-                        self.screen.blit(self.font_h.render(self.point_names[i], True, (0, 0, 255)),
-                                         (self.zero_point[0] + 6 - point[0] * 16, self.zero_point[1] - 30 + point[1] * 16))
-                        if self.print_plane_index:
-                            self.screen.blit(self.font_l.render("1", True, (0, 0, 255)),
-                                             (self.zero_point[0] + 21 - point[0] * 16, self.zero_point[1] - 19 + point[1] * 16))
-                    self.screen.blit(self.textures[1],
-                                     (self.zero_point[0] - 9 - point[0] * 16, self.zero_point[1] - 9 - point[2] * 16))
-                    if self.print_point_names:
-                        self.screen.blit(self.font_h.render(self.point_names[i], True, (0, 255, 0)),
-                                         (self.zero_point[0] + 6 - point[0] * 16, self.zero_point[1] - 30 - point[2] * 16))
-                        if self.print_plane_index:
-                            self.screen.blit(self.font_l.render("2", True, (0, 255, 0)),
-                                             (self.zero_point[0] + 21 - point[0] * 16, self.zero_point[1] - 19 - point[2] * 16))
+            for point in self.points:
+                point.draw()
             pg.display.update()
 
 
